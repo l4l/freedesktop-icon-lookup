@@ -1,0 +1,18 @@
+[package]
+name = "freedesktop-icon-lookup"
+description = "Freedesktop icons lookup"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/l4l/freedesktop-icon-lookup"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = []
+debug = []
+
+[dependencies]
+either = "1"
+thiserror = "1"
+tini = "1"
