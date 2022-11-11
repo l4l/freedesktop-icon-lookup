@@ -260,3 +260,21 @@ where
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_search_dirs() {
+        std::env::remove_var("XDG_DATA_DIRS");
+        std::env::set_var("HOME", "/tmp");
+        // `/usr/share/pixmaps` handled separately as it doesn't have themes.
+        assert_eq!(
+            vec!["/tmp/.icons", "/usr/share/local/icons", "/usr/share/icons"],
+            search_dirs()
+                .map(|p| p.to_str().unwrap().to_string())
+                .collect::<Vec<_>>()
+        );
+    }
+}
