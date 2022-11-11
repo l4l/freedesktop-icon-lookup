@@ -204,8 +204,10 @@ impl<'a> LookupParam<'a> {
 
 fn search_dirs() -> impl Iterator<Item = PathBuf> {
     use std::iter::once;
+    let home_dir = std::env::var("HOME").ok();
 
-    std::env::var("HOME")
+    home_dir
+        .as_ref()
         .map(|var| PathBuf::from(var).join(".icons"))
         .into_iter()
         .chain(if let Ok(dirs) = std::env::var("XDG_DATA_DIRS") {
@@ -217,9 +219,14 @@ fn search_dirs() -> impl Iterator<Item = PathBuf> {
             )
         } else {
             Either::Right(
-                once(PathBuf::from("/usr/share/local/icons"))
+                home_dir
                     .into_iter()
-                    .chain(once(PathBuf::from("/usr/share/icons"))),
+                    .map(|var| PathBuf::from(var).join("icons"))
+                    .chain(
+                        once(PathBuf::from("/usr/share/local/icons"))
+                            .into_iter()
+                            .chain(once(PathBuf::from("/usr/share/icons"))),
+                    ),
             )
         })
 }
@@ -259,4 +266,26 @@ where
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_search_dirs() {
+        std::env::remove_var("XDG_DATA_DIRS");
+        std::env::set_var("HOME", "/tmp");
+        assert_eq!(
+            vec![
+                "/tmp/.icons",
+                "/tmp/icons",
+                "/usr/share/local/icons",
+                "/usr/share/icons",
+            ],
+            search_dirs()
+                .map(|p| p.to_str().unwrap().to_string())
+                .collect::<Vec<_>>()
+        );
+    }
 }
