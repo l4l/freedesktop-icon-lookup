@@ -12,21 +12,21 @@
 //!
 //! ```rust
 //! # use std::path::PathBuf;
-//! use freedesktop_icon_lookup::{Lookup, LookupParam};
+//! use freedesktop_icon_lookup::{Cache, LookupParam};
 //! # use freedesktop_icon_lookup::Result;
 //!
 //! # fn main() -> Result<()> {
 //! let theme = "Adwaita";
 //! let mut cache = Cache::new()?;
 //! cache.load(theme)?;
-//! let _: Option<PathBuf> = cache.lookup("firefox", theme)?;
+//! let _: Option<PathBuf> = cache.lookup("firefox", theme);
 //! # Ok(())
 //! # }
+//! ```
 //!
 //! # Alternatives
 //!
 //! [freedesktop-icons](https://crates.io/crates/freedesktop-icons) might be a better option if you only need a few icons to search.
-//! ```
 
 pub use err::{Error, Result};
 pub use lookup::{Cache, LookupParam};
