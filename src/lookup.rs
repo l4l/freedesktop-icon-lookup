@@ -205,9 +205,19 @@ impl<'a> LookupParam<'a> {
 fn search_dirs() -> impl Iterator<Item = PathBuf> {
     use std::iter::once;
 
-    std::env::var("HOME")
+    let home_dir = std::env::var("HOME");
+
+    home_dir
+        .as_ref()
         .map(|var| PathBuf::from(var).join(".icons"))
         .into_iter()
+        // this one seems to be missing in the spec, though seems intuitive
+        .chain(
+            std::env::var("XDG_DATA_HOME")
+                .map(|var| PathBuf::from(var).join("icons"))
+                .or_else(|_| home_dir.map(|var| PathBuf::from(var).join(".local/share/icons")))
+                .into_iter(),
+        )
         .chain(if let Ok(dirs) = std::env::var("XDG_DATA_DIRS") {
             Either::Left(
                 dirs.split(':')
@@ -218,7 +228,6 @@ fn search_dirs() -> impl Iterator<Item = PathBuf> {
         } else {
             Either::Right(
                 once(PathBuf::from("/usr/share/local/icons"))
-                    .into_iter()
                     .chain(once(PathBuf::from("/usr/share/icons"))),
             )
         })
@@ -267,11 +276,17 @@ mod tests {
 
     #[test]
     fn default_search_dirs() {
+        std::env::remove_var("XDG_DATA_HOME");
         std::env::remove_var("XDG_DATA_DIRS");
         std::env::set_var("HOME", "/tmp");
         // `/usr/share/pixmaps` handled separately as it doesn't have themes.
         assert_eq!(
-            vec!["/tmp/.icons", "/usr/share/local/icons", "/usr/share/icons"],
+            vec![
+                "/tmp/.icons",
+                "/tmp/.local/share/icons",
+                "/usr/share/local/icons",
+                "/usr/share/icons"
+            ],
             search_dirs()
                 .map(|p| p.to_str().unwrap().to_string())
                 .collect::<Vec<_>>()
