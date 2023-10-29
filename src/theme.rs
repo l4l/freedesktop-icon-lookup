@@ -14,12 +14,16 @@ pub(crate) struct Theme {
 }
 
 impl Theme {
-    pub(crate) fn new(path: impl Into<PathBuf>) -> Result<Self> {
-        let path = path.into();
-        let ini = read_index(&path)?;
+    pub(crate) fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let path = path.as_ref();
+        let ini = read_index(path)?;
 
         let inherits = ini.get::<String>("Icon Theme", "Inherits");
-        let directory_names = ini.get_vec::<String>("Icon Theme", "Directories").unwrap();
+        let directory_names = ini
+            .get_vec::<String>("Icon Theme", "Directories")
+            .ok_or_else(|| Error::InvalidTheme {
+                reason: Some(r#""[Icon Theme].Directories" has invalid value"#.to_string()),
+            })?;
         let scaled_directory_names = ini.get_vec::<String>("Icon Theme", "ScaledDirectories");
 
         let mut icon_infos = HashMap::<_, Vec<_>>::new();
@@ -42,7 +46,7 @@ impl Theme {
         }
 
         Ok(Self {
-            path,
+            path: path.into(),
             icon_infos,
             inherits,
         })
@@ -110,7 +114,7 @@ impl IconInfo {
 fn read_index<P: AsRef<Path>>(theme_path: P) -> Result<Ini> {
     let theme_path = theme_path.as_ref();
     let index_path = theme_path.join("index.theme");
-    let mut f = std::fs::File::open(&index_path).map_err(|source| Error::ThemeIndexMissing {
+    let mut f = std::fs::File::open(index_path).map_err(|source| Error::ThemeIndexMissing {
         path: theme_path.into(),
         source,
     })?;

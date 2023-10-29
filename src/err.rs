@@ -9,6 +9,10 @@ pub enum Error {
     ThemeIndexMissing { path: PathBuf, source: IoError },
     #[error("icon theme index is invalid: {path:?}")]
     InvalidIndex { path: PathBuf, source: tini::Error },
+    #[error("invalid theme{}", reason.as_ref().map(|r| format!(": {r}")).unwrap_or_default())]
+    InvalidTheme { reason: Option<String> },
+    #[error("theme not found")]
+    ThemeNotFound,
     #[error("error at icon dir traversing")]
     TraverseDir { source: IoError },
     #[error("inheritance cycle detected")]

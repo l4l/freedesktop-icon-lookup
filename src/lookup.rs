@@ -50,7 +50,14 @@ impl Cache {
 
     /// Load icons for specified icon theme.
     pub fn load(&mut self, theme: impl Into<String>) -> Result<()> {
-        self.load_inner(theme, 0)
+        let themes_count = self.themes.len();
+        self.load_inner(theme, 0).and_then(|()| {
+            if themes_count == self.themes.len() {
+                Err(Error::ThemeNotFound)
+            } else {
+                Ok(())
+            }
+        })
     }
 
     fn load_inner(&mut self, theme: impl Into<String>, depth: usize) -> Result<()> {
@@ -67,13 +74,30 @@ impl Cache {
         for path in search_dirs() {
             let path = path.join(&theme);
             if path.exists() {
-                let t = Theme::new(path)?;
+                let t = match Theme::new(&path) {
+                    Ok(t) => t,
+                    Err(e) => {
+                        #[cfg(feature = "log")]
+                        log::error!("theme loading failed: {e} at{}", path.display());
+                        #[cfg(not(feature = "log"))]
+                        let _ = e;
+                        continue;
+                    }
+                };
 
                 if let Some(inherits) = t.inherits() {
                     self.load_inner(inherits, depth + 1)?;
                 }
 
-                self.themes.entry(theme.clone()).or_default().push(t);
+                if t.inherits().map_or(true, |i| self.themes.contains_key(i)) {
+                    self.themes.entry(theme.clone()).or_default().push(t);
+                } else {
+                    #[cfg(feature = "log")]
+                    log::warn!(
+                        "skipping {theme} as inherited {} was not loaded",
+                        t.inherits().unwrap()
+                    );
+                }
             }
         }
 
