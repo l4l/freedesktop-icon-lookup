@@ -96,7 +96,7 @@ impl Cache {
                 } else {
                     #[cfg(feature = "log")]
                     log::warn!(
-                        "skipping {theme:#?} as inherited {} was not loaded",
+                        "skipping {theme} as inherited {} was not loaded",
                         t.inherits().unwrap().join(",")
                     );
                 }
