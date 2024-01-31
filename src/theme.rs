@@ -10,7 +10,7 @@ use crate::{Directory, Error, Result};
 pub(crate) struct Theme {
     path: PathBuf,
     icon_infos: HashMap<String, Vec<IconInfo>>,
-    inherits: Option<Vec<String>>,
+    inherits: Vec<String>,
 }
 
 impl Theme {
@@ -20,7 +20,8 @@ impl Theme {
 
         let inherits = ini
             .get::<String>("Icon Theme", "Inherits")
-            .map(|x| x.split(',').map(|x| x.to_string()).collect());
+            .map(|x| x.split(',').map(|x| x.trim().to_string()).collect())
+            .unwrap_or_default();
         let directory_names = ini
             .get_vec::<String>("Icon Theme", "Directories")
             .ok_or_else(|| Error::InvalidTheme {
@@ -68,8 +69,8 @@ impl Theme {
         })
     }
 
-    pub(crate) fn inherits(&self) -> Option<&[String]> {
-        self.inherits.as_deref()
+    pub(crate) fn inherits(&self) -> &[String] {
+        &self.inherits
     }
 }
 
