@@ -85,10 +85,8 @@ impl Cache {
                     }
                 };
 
-                if !t.inherits().is_empty() {
-                    for inherit in t.inherits() {
-                        self.load_inner(inherit, depth + 1)?;
-                    }
+                for inherit in t.inherits() {
+                    self.load_inner(inherit, depth + 1)?;
                 }
 
                 if t.inherits().iter().all(|x| self.themes.contains_key(x)) {
