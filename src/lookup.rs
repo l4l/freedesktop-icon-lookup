@@ -85,17 +85,17 @@ impl Cache {
                     }
                 };
 
-                if let Some(inherits) = t.inherits() {
-                    self.load_inner(inherits, depth + 1)?;
+                for inherit in t.inherits() {
+                    self.load_inner(inherit, depth + 1)?;
                 }
 
-                if t.inherits().map_or(true, |i| self.themes.contains_key(i)) {
+                if t.inherits().iter().all(|x| self.themes.contains_key(x)) {
                     self.themes.entry(theme.clone()).or_default().push(t);
                 } else {
                     #[cfg(feature = "log")]
                     log::warn!(
                         "skipping {theme} as inherited {} was not loaded",
-                        t.inherits().unwrap()
+                        t.inherits().join(",")
                     );
                 }
             }
@@ -182,7 +182,7 @@ impl Cache {
             }
         }
 
-        for theme in themes.iter().filter_map(|t| t.inherits()) {
+        for theme in themes.iter().flat_map(|t| t.inherits()) {
             if let Some(search) = self.lookup_themed(theme, icon_name, f, depth + 1) {
                 return Some(search);
             }
